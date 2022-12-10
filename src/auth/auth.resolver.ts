@@ -1,5 +1,9 @@
+import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
+
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
 import { SignupInput, LoginInput } from './dto/inputs';
 import { AuthResponse } from './dto/types/auth-response.types';
 
@@ -15,6 +19,14 @@ export class AuthResolver {
     @Mutation( () => AuthResponse, {name: 'login'})
     async login(@Args('loginInput') loginInput: LoginInput): Promise<AuthResponse> {
       return this.authService.login(loginInput);
+    }
+
+    @Mutation(() => AuthResponse, {name: 'revalite'})
+    @UseGuards( JwtAuthGuard )
+    revalidateToken(
+
+    ): AuthResponse {
+      throw new Error('Method not implemented.');
     }
   
 }
