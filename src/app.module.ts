@@ -7,6 +7,8 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
 import { ItemsModule } from './items/items.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 
 @Module({
@@ -36,6 +38,10 @@ import { ItemsModule } from './items/items.module';
       }),
       
       ItemsModule,
+      
+      UsersModule,
+      
+      AuthModule,
   ],
   controllers: [],
   providers: [],
