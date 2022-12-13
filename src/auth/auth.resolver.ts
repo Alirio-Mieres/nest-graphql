@@ -6,6 +6,9 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 import { SignupInput, LoginInput } from './dto/inputs';
 import { AuthResponse } from './dto/types/auth-response.types';
+import { CurrentUser } from './decorators/current-user.decorator';
+import { User } from 'src/users/entities/user.entity';
+import { ValidRoles } from './enums/valid-roles.enum';
 
 @Resolver()
 export class AuthResolver {
@@ -24,9 +27,9 @@ export class AuthResolver {
     @Mutation(() => AuthResponse, {name: 'revalite'})
     @UseGuards( JwtAuthGuard )
     revalidateToken(
-
+      @CurrentUser(/*[ ValidRoles.admin ]*/) user: User
     ): AuthResponse {
-      throw new Error('Method not implemented.');
+      return this.authService.revalidateToken(user);
     }
   
 }

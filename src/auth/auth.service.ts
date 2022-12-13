@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
@@ -15,15 +15,15 @@ export class AuthService {
         private readonly jwtService: JwtService
     ) { }
 
-    private getJwtToken( userId: string) {
-        return this.jwtService.sign({ id: userId});
+    private getJwtToken(userId: string) {
+        return this.jwtService.sign({ id: userId });
     }
 
     async signup(signupInput: SignupInput): Promise<AuthResponse> {
         const user = await this.userService.create(signupInput);
 
         const token = this.getJwtToken(user.id);
-        
+
         return { token, user: user }
     }
 
@@ -31,7 +31,7 @@ export class AuthService {
         const { email, password } = loginInput;
         const user = await this.userService.findOneByEmail(email);
 
-        if( !bcrypt.compareSync(password, user.password)) {
+        if (!bcrypt.compareSync(password, user.password)) {
             throw new BadRequestException('Invalid credentials');
         }
 
@@ -43,6 +43,20 @@ export class AuthService {
         }
     }
 
-    
+    async validaUser(id: string): Promise<User> {
+        const user = await this.userService.findOneById(id);
+        if( !user.isActive ){
+            throw new UnauthorizedException(`User is inactive, talk with a admin`);
+        }
+        delete user.password
+
+        return user;
+    }
+
+    revalidateToken(user: User): AuthResponse {
+        const token = this.getJwtToken(user.id);
+        return {token, user};
+    }
+
 
 }
