@@ -11,7 +11,6 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common/exceptions';
-import { ValidRoles } from './dto/args/roles.args';
 import { ValidRolesEnum } from 'src/auth/enums/valid-roles.enum';
 
 @Injectable()
@@ -95,6 +94,7 @@ export class UsersService {
     userToBlock.lastUpdateBy = adminUser;
     return await this.userRepository.save(userToBlock);
   }
+
 
   private handleDBErrors(error: any): never {
     if (error.code === '23505') {
