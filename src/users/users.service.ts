@@ -1,25 +1,27 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
-
 import { User } from './entities/user.entity';
 import { SignupInput } from 'src/auth/dto/inputs/singup.input';
 import { UpdateUserInput } from './dto/update-user.input';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BadRequestException, InternalServerErrorException, NotFoundException } from '@nestjs/common/exceptions';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common/exceptions';
 import { ValidRoles } from './dto/args/roles.args';
 import { ValidRolesEnum } from 'src/auth/enums/valid-roles.enum';
 
 @Injectable()
 export class UsersService {
-
   private logger = new Logger('UsersService');
 
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) { }
+  ) {}
 
   async create(signupInput: SignupInput): Promise<User> {
     try {
@@ -28,23 +30,19 @@ export class UsersService {
         password: await bcrypt.hash(signupInput.password, 10),
       });
       return await this.userRepository.save(newUser);
-
     } catch (error) {
       this.handleDBErrors(error);
-
     }
   }
 
   async findAll(roles: ValidRolesEnum[]): Promise<User[]> {
-    
-    if(roles.length === 0) return this.userRepository.find();
+    if (roles.length === 0) return this.userRepository.find();
 
-
-    return this.userRepository.createQueryBuilder()
+    return this.userRepository
+      .createQueryBuilder()
       .andWhere('ARRAY[roles] && ARRAY[:...roles]')
       .setParameter('roles', roles)
       .getMany();
-
   }
 
   async findOneByEmail(email: string): Promise<User> {
@@ -67,24 +65,43 @@ export class UsersService {
     }
   }
 
-  update(id: number, updateUserInput: UpdateUserInput) {
-    return `This action updates a #${id} user`;
+  async update(
+    id: string,
+    updateUserInput: UpdateUserInput,
+    adminUser: User,
+  ): Promise<User> {
+    try {
+      const user = await this.userRepository.preload({
+        id,
+        ...updateUserInput,
+      });
+
+      user.lastUpdateBy = adminUser;
+
+      if (!user) {
+        throw new NotFoundException(`${id} not found`);
+      }
+
+      await this.userRepository.save(user);
+      return user;
+    } catch (error) {
+      this.handleDBErrors(error);
+    }
   }
 
   async block(id: string, adminUser: User): Promise<User> {
-    const userToBlock = await this.findOneById(id)
+    const userToBlock = await this.findOneById(id);
     userToBlock.isActive = false;
     userToBlock.lastUpdateBy = adminUser;
     return await this.userRepository.save(userToBlock);
   }
 
   private handleDBErrors(error: any): never {
-
     if (error.code === '23505') {
       throw new BadRequestException(error.detail.replace('Key', ''));
     }
 
-    if(error.code == 'error-001'){
+    if (error.code == 'error-001') {
       throw new BadRequestException(error.detail.replace('Key', ''));
     }
 
