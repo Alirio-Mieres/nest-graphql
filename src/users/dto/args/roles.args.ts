@@ -7,5 +7,5 @@ export class ValidRoles {
     
     @Field(() => [ValidRolesEnum], {nullable: true})
     @IsArray()
-    roles: string[] = [];
+    roles: ValidRolesEnum[] = [];
 }

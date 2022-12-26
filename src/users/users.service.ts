@@ -8,6 +8,8 @@ import { UpdateUserInput } from './dto/update-user.input';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BadRequestException, InternalServerErrorException, NotFoundException } from '@nestjs/common/exceptions';
+import { ValidRoles } from './dto/args/roles.args';
+import { ValidRolesEnum } from 'src/auth/enums/valid-roles.enum';
 
 @Injectable()
 export class UsersService {
@@ -33,8 +35,16 @@ export class UsersService {
     }
   }
 
-  async findAll(): Promise<User[]> {
-    return [];
+  async findAll(roles: ValidRolesEnum[]): Promise<User[]> {
+    
+    if(roles.length === 0) return this.userRepository.find();
+
+
+    return this.userRepository.createQueryBuilder()
+      .andWhere('ARRAY[roles] && ARRAY[:...roles]')
+      .setParameter('roles', roles)
+      .getMany();
+
   }
 
   async findOneByEmail(email: string): Promise<User> {
