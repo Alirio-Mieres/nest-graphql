@@ -23,18 +23,18 @@ export class ItemsService {
     const { limit, offset } = paginationArgs;
     const { search } = searchArgs;
 
-    console.log(search)
+    const queryBuilder = this.itemRepository.createQueryBuilder()
+      .take(limit)
+      .skip(offset)
+      .where(`"userId" = :userId`, {userId: user.id});
 
-    return await this.itemRepository.find({
-      take: limit,
-      skip: offset,
-      where: {
-        user: {
-          id: user.id,
-        },
-        name: Like(`${search}`)
-      },
-    });
+      if( search ) {
+        queryBuilder.andWhere(`LOWER(name) like :name`, {name: `%${search.toLowerCase()}%`});
+      }
+
+      return await queryBuilder.getMany();
+
+
   }
 
   async findOne(id: string, user: User): Promise<Item> {
