@@ -28,7 +28,7 @@ type AuthResponse {
 type Query {
   users(roles: [ValidRoles!] = []): [User!]!
   user(id: ID!): User!
-  items: [Item!]!
+  items(offset: Int = 0, limit: Int = 10, search: String): [Item!]!
   item(id: ID!): Item!
 }
 
