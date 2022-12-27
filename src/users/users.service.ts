@@ -12,6 +12,7 @@ import {
   NotFoundException,
 } from '@nestjs/common/exceptions';
 import { ValidRolesEnum } from 'src/auth/enums/valid-roles.enum';
+import { PaginationArgs, SearchArgs } from 'src/common/dto/args';
 
 @Injectable()
 export class UsersService {
@@ -34,14 +35,26 @@ export class UsersService {
     }
   }
 
-  async findAll(roles: ValidRolesEnum[]): Promise<User[]> {
-    if (roles.length === 0) return this.userRepository.find();
-
-    return this.userRepository
+  async findAll(roles: ValidRolesEnum[], paginationArgs: PaginationArgs, searcArgs: SearchArgs): Promise<User[]> {
+    const { limit, offset } = paginationArgs;
+    const {search} = searcArgs;
+   
+    const queryBuilder = this.userRepository
       .createQueryBuilder()
-      .andWhere('ARRAY[roles] && ARRAY[:...roles]')
-      .setParameter('roles', roles)
-      .getMany();
+      .take(limit)
+      .skip(offset);
+
+      if (roles.length > 0 && roles !== null) {
+        queryBuilder.andWhere('ARRAY[roles] && ARRAY[:...roles]')
+        .setParameter('roles', roles)
+      } 
+
+      if( search ) {
+        queryBuilder.andWhere(`LOWER(User.fullName) like :fullName`, {fullName: `%${search.toLowerCase()}%`});
+      }
+
+      return await queryBuilder.getMany();
+
   }
 
   async findOneByEmail(email: string): Promise<User> {
